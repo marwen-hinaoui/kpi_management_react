@@ -1,0 +1,47 @@
+.insert-data-wrapper {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+.filters {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.inputs {
+  margin-bottom: 1.5rem;
+}
+
+.save-button {
+  text-align: right;
+  margin-top: 2rem;
+}
+.insert-data-wrapper {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+.filters {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.left, .right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.save-button {
+  text-align: right;
+  margin-top: 2rem;
+}
+.left-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

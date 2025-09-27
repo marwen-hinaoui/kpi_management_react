@@ -1,0 +1,86 @@
+.kpi-detail-wrapper {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+.kpi-detail-title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #cb0707;
+}
+
+.kpi-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 2rem;
+}
+
+.kpi-table th,
+.kpi-table td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.kpi-table th {
+  background-color: #fff;
+  color: #cb0707;
+}
+
+.kpi-table td {
+  background-color: #fff;
+  color: #333;
+}
+
+.chart-container {
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.secondary-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.secondary-kpi-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.secondary-kpi-card h4 {
+  margin: 0 0 0.5rem;
+  color: #333;
+}
+
+.secondary-kpi-card p {
+  margin: 0;
+  color: #666;
+}
+.mode-toggle {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mode-toggle button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #cb0707;
+  background-color: white;
+  color: #cb0707;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.mode-toggle button.active {
+  background-color: #cb0707;
+  color: white;
+}
