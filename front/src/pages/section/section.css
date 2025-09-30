@@ -1,0 +1,48 @@
+.section-wrapper {
+  display: flex;
+  background-color: white;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.section-content {
+  flex: 1;
+  padding: 2rem;
+  margin-left: 60px; /* largeur du sidebar */
+  box-sizing: border-box;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #0e0e0e;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-card {
+  background-color: white;
+  border: 2px solid #cb0707; /* rouge foncé */
+  color: #0e0e0e;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 2rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.section-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+  background-color: #cb0707;
+  color: white;
+}
