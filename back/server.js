@@ -12,7 +12,7 @@ app.use(
     credentials: true,
   })
 );
-
+const KpiData = require('./models/KpiData');
 const PORT = 3000;
 const HOST = "127.0.0.1";
 const cookieParser = require("cookie-parser");
@@ -24,6 +24,7 @@ app.use("/api/sections", require("./routes/section.routes"));
 app.listen(PORT, async () => {
   try {
     await sequelize.authenticate();
+
     console.log(
       "Connected to DB and server running on http://" + HOST + ":" + PORT
     );

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import Sidebar from "../sidebar/sidebar"; // adapte le chemin si besoin
+
 import "../KpiSectionPage/KpiSectionPage.css"; 
 const KpiSectionPage = () => {
   const { sectionName } = useParams();
@@ -9,25 +11,40 @@ const KpiSectionPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchKpis = async () => {
-      try {
-        const res = await axios.get(`http://localhost:3000/api/kpis/section/${sectionName}`);
-        setKpis(res.data);
-      } catch (err) {
-        console.error("Erreur lors du chargement des KPIs :", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchKpis = async () => {
+    try {
+      const res = await axios.get(`http://localhost:3000/api/kpis/section/${sectionName}`);
+      let loadedKpis = res.data;
 
-    fetchKpis();
-  }, [sectionName]);
+      // ✅ Vérifier s’il y a un KPI temporaire à ajouter
+      const newKpiRaw = localStorage.getItem("newKpi");
+      if (newKpiRaw) {
+        const newKpi = JSON.parse(newKpiRaw);
+        if (newKpi.section === sectionName) {
+          loadedKpis = [...loadedKpis, newKpi];
+          localStorage.removeItem("newKpi"); // Nettoyer après usage
+        }
+      }
+
+      setKpis(loadedKpis);
+    } catch (err) {
+      console.error("Erreur lors du chargement des KPIs :", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchKpis();
+}, [sectionName]);
+
 
   return (
+      <div className="kpi-section-layout">
+    {/* Sidebar à gauche */}
+    <Sidebar />
     <div className="kpi-section-wrapper">
-      <button className="back-button" onClick={() => navigate("/sections")}>
-        ← Retour aux sections
-      </button>
+      
+   
       <h2 className="kpi-section-title">KPIs pour la section : {sectionName}</h2>
 
       {loading ? (
@@ -52,6 +69,7 @@ const KpiSectionPage = () => {
       )}
 
     </div>
+      </div>
   );
 };
 

@@ -2,39 +2,64 @@ import React, { useState } from "react";
 import { Layout, Button, Modal, Form, Input, Select, message } from "antd";
 import Sidebar from "../sidebar/sidebar"; // adapte le chemin si besoin
 import "./KpiPage.css";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const { Content } = Layout;
 const { Option } = Select;
 
 const sections = ["Production", "Quality", "Maintenance"];
-const kpiPrincipaux = {
-  Production: ["Efficiency", "Output"],
-  Quality: ["Scrap Rate", "Defects"],
-  Maintenance: ["Downtime", "TRS"]
-};
-const kpiSecondaires = {
-  Efficiency: ["TRS Cutting", "AIP"],
-  Output: ["Project Output", "IDOCs"],
-  ScrapRate: ["Rework", "Audit Score"],
-  Defects: ["Visual", "Functional"],
-  Downtime: ["Machine Stop", "Intervention"],
-  TRS: ["TRS Cutting", "TRS Welding"]
-};
+
 
 const KpiPage = () => {
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedKpiPrincipal, setSelectedKpiPrincipal] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
+  const navigate = useNavigate();
 
-  const handleSave = () => {
-    form.validateFields().then(values => {
-      console.log("Données enregistrées :", values);
-      message.success("KPI ajouté avec succès !");
-      setIsModalOpen(false);
-      form.resetFields();
+  const [kpiPrincipaux, setKpiPrincipaux] = useState({
+    Production: ["Efficiency", "Output"],
+    Quality: ["Scrap Rate", "Defects"],
+    Maintenance: ["Downtime", "TRS"]
+  });
+
+  const [kpiSecondaires, setKpiSecondaires] = useState({
+    Efficiency: ["TRS Cutting", "AIP"],
+    Output: ["Project Output", "IDOCs"],
+    ScrapRate: ["Rework", "Audit Score"],
+    Defects: ["Visual", "Functional"],
+    Downtime: ["Machine Stop", "Intervention"],
+    TRS: ["TRS Cutting", "TRS Welding"]
+  });
+
+const handleSave = async () => {
+  try {
+    const values = await form.validateFields();
+    const { name, type, section } = values;
+
+    await axios.post("http://localhost:3000/api/kpis", {
+      nom: name,
+      type,
+      section
     });
-  };
+
+    // ✅ Stocker temporairement le KPI dans localStorage
+    const newKpi = { nom: name, type, section };
+    localStorage.setItem("newKpi", JSON.stringify(newKpi));
+
+    message.success("KPI ajouté avec succès !");
+    setIsModalOpen(false);
+    form.resetFields();
+
+    // Naviguer vers la section
+    navigate(`/sections/${section}`);
+  } catch (err) {
+    console.error("Erreur lors de l'ajout du KPI :", err);
+    message.error("Échec de l'ajout du KPI.");
+  }
+};
+
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -90,7 +115,7 @@ const KpiPage = () => {
             onClick={() => setIsModalOpen(true)}
             style={{ marginTop: "2rem", width: "100%" }}
           >
-            ➕ Add Data
+            ➕ Add KPI
           </Button>
         </div>
 

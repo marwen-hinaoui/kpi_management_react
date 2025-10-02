@@ -1,6 +1,6 @@
 .kpi-section-wrapper {
   padding: 2rem;
-  background-color: #f9f9f9;
+  background-color: white;
   min-height: 100vh;
 }
 
@@ -17,7 +17,7 @@
 }
 
 .kpi-card {
-  background-color: white;
+  background-color: #ddd;
   border: 1px solid #ddd;
   padding: 1.5rem;
   border-radius: 8px;
@@ -46,4 +46,34 @@
   color: #cb0707;
   font-size: 1rem;
   cursor: pointer;
+}
+.kpi-section-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.kpi-section-content {
+  flex: 1;
+  padding: 20px;
+  background-color: #ddd;
+}
+
+.kpi-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.kpi-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 250px;
+  transition: box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

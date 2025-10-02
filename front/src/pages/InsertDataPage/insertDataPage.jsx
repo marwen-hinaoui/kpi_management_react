@@ -1,8 +1,11 @@
-import React, { useState } from "react";
-import { Layout, Select, DatePicker, Input, Button, Table } from "antd";
+import React, { useState, useEffect } from "react";
+import { Layout, Select, DatePicker, Input, Button, Table, message } from "antd";
 import dayjs from "dayjs";
 import Sidebar from "../sidebar/sidebar"; // adapte le chemin si besoin
 import "./insertDataPage.css";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -22,7 +25,18 @@ const InsertDataPage = () => {
   const [massColumn, setMassColumn] = useState("target");
   const [massValue, setMassValue] = useState("");
   const [tableData, setTableData] = useState([]);
+  const [kpis, setKpis] = useState([]);
+const navigate = useNavigate();
 
+const [sectionsWithKpis, setSectionsWithKpis] = useState([]);
+const [selectedSection, setSelectedSection] = useState(null);
+const [selectedKpiId, setSelectedKpiId] = useState(null);
+
+useEffect(() => {
+  axios.get("http://localhost:3000/api/kpis/sections-with-kpis")
+    .then(res => setSectionsWithKpis(res.data))
+    .catch(err => console.error("Erreur chargement sections/KPIs :", err));
+}, []);
   const handleRangeSelect = (dates) => {
     if (!dates) return;
     const start = dayjs(dates[0]);
@@ -58,10 +72,36 @@ const InsertDataPage = () => {
     setTableData(newData);
   };
 
-  const handleSave = () => {
-    console.log("Données enregistrées :", tableData);
-    // axios.post(...) vers ton backend ici
-  };
+const handleSave = async () => {
+  if (!selectedKpiId) {
+    message.error("Veuillez sélectionner un KPI.");
+    return;
+  }
+
+  try {
+    await axios.post(`http://localhost:3000/api/kpis/${selectedKpiId}/data`, {
+      year,
+      month,
+      unit,
+      data: tableData.map(row => ({
+        date: row.date,
+        target: parseFloat(row.target),
+        actual: parseFloat(row.actual),
+        col1: row.col1,
+        col2: row.col2,
+        comment: row.comment
+      }))
+    });
+
+    message.success("Données enregistrées !");
+    navigate(`/kpi/${selectedKpiId}`);
+  } catch (err) {
+    console.error("Erreur enregistrement :", err);
+    message.error("Échec de l'enregistrement.");
+  }
+};
+
+
 
   const columns = [
     { title: "Date", dataIndex: "date", key: "date" },
@@ -109,7 +149,59 @@ const InsertDataPage = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
+      
       <Sidebar />
+      <div style={{ display: "flex" }}>
+  <div style={{
+    width: "250px",
+    backgroundColor: "#fff",
+    padding: "1rem",
+    borderRight: "1px solid #ddd",
+    height: "100vh",
+    overflowY: "auto"
+  }}>
+    <h3>Sections</h3>
+    {sectionsWithKpis.map(section => (
+      <div key={section.section}>
+        <Button
+          type={selectedSection === section.section ? "primary" : "default"}
+          block
+          onClick={() => {
+            setSelectedSection(section.section);
+            setSelectedKpiId(null);
+          }}
+          style={{ marginBottom: "0.5rem" }}
+        >
+          {section.section}
+        </Button>
+
+        {selectedSection === section.section && (
+          <div style={{ marginLeft: "1rem" }}>
+            {section.kpis.map(kpi => (
+              <Button
+                key={kpi.id}
+                type={selectedKpiId === kpi.id ? "primary" : "default"}
+                block
+                onClick={() => setSelectedKpiId(kpi.id)}
+                style={{ marginBottom: "0.5rem" }}
+              >
+                {kpi.nom}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  
+</div>
+
+      <div style={{ display: "flex" }}>
+
+ 
+          </div>
+
       <Content style={{ padding: "2rem", backgroundColor: "#f9f9f9" }}>
         <h2>Insert Data</h2>
 
