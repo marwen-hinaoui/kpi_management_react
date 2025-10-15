@@ -1,23 +1,16 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
-import Chart from "chart.js/auto";
-import "./KpiDetailPage.css";
-import Sidebar from "../sidebar/sidebar"; // adapte le chemin si besoin
+import Sidebar from "../sidebar/sidebar";
+import { Column, Line } from "@ant-design/plots";
+import "../KpiDetailPage/KpiDetailPage.css";
 
 const KpiDetailPage = () => {
   const { kpiId } = useParams();
-  const navigate = useNavigate();
-
-  const [kpi, setKpi] = useState(null);
+  const [kpi, setKpi] = useState({});
   const [dailyData, setDailyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [mode, setMode] = useState("daily");
-
-  const chartRef = useRef(null);
-  const monthlyChartRef = useRef(null);
-  const dailyChartInstance = useRef(null);
-  const monthlyChartInstance = useRef(null);
 
   useEffect(() => {
     axios
@@ -25,233 +18,213 @@ const KpiDetailPage = () => {
       .then((res) => {
         setKpi(res.data.kpi);
         setDailyData(res.data.dailyData);
+        
+        const grouped = {};
+        res.data.dailyData.forEach(({ date, target, actual }) => {
+          const month = new Date(date).toLocaleString("default", {
+            month: "short",
+          });
+          if (!grouped[month]) grouped[month] = { target: [], actual: [] };
+          grouped[month].target.push(target);
+          grouped[month].actual.push(actual);
+        });
+        
+        const monthly = Object.entries(grouped).map(([month, values]) => ({
+          month,
+          target: values.target.reduce((a, b) => a + b, 0) / values.target.length,
+          actual: values.actual.reduce((a, b) => a + b, 0) / values.actual.length,
+        }));
+        
+        setMonthlyData(monthly);
       })
       .catch((err) => console.error("Erreur chargement KPI :", err));
   }, [kpiId]);
 
-  useEffect(() => {
-    if (dailyData.length > 0) {
-      const grouped = {};
-      dailyData.forEach(({ date, target, actual }) => {
-        const month = new Date(date).toLocaleString("default", {
-          month: "short",
-        });
-        if (!grouped[month]) grouped[month] = { target: [], actual: [] };
-        grouped[month].target.push(target);
-        grouped[month].actual.push(actual);
-      });
+  // Configuration pour le graphique quotidien - Colonnes pour Actual seulement
+  const dailyChartConfig = {
+    data: dailyData,
+    xField: "date",
+    yField: "actual",
+    color: "#1890ff",
+    columnWidthRatio: 0.6,
+    height: 400,
+    legend: false,
+  };
 
-      const monthly = Object.entries(grouped).map(([month, values]) => ({
-        month,
-        avgTarget:
-          values.target.reduce((a, b) => a + b, 0) / values.target.length,
-        avgActual:
-          values.actual.reduce((a, b) => a + b, 0) / values.actual.length,
-      }));
+  // Configuration pour le graphique mensuel - Colonnes pour Actual seulement
+  const monthlyChartConfig = {
+    data: monthlyData,
+    xField: "month",
+    yField: "actual",
+    color: "#1890ff",
+    columnWidthRatio: 0.6,
+    height: 400,
+    legend: false,
+  };
 
-      setMonthlyData(monthly);
-    }
-  }, [dailyData]);
-
-  useEffect(() => {
-    if (chartRef.current && dailyData.length > 0) {
-      if (dailyChartInstance.current) {
-        dailyChartInstance.current.destroy();
-      }
-
-      dailyChartInstance.current = new Chart(chartRef.current, {
-        type: "bar",
-        data: {
-          labels: dailyData.map((d) => d.date),
-          datasets: [
-            {
-              type: "line",
-              label: "Target",
-              data: dailyData.map((d) => d.target),
-              borderColor: "#333",
-              borderWidth: 2,
-              fill: false,
-            },
-            {
-              type: "bar",
-              label: "Actual",
-              data: dailyData.map((d) => d.actual),
-              backgroundColor: "rgba(255, 0, 0, 0.5)",
-            },
-          ],
+  // Configuration combinée pour afficher Actual en colonnes ET Target en ligne
+  const dailyCombinedConfig = {
+    data: dailyData,
+    children: [
+      {
+        type: "interval", // Colonnes pour Actual
+        encode: {
+          x: "date",
+          y: "actual",
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-            title: { display: true, text: "Daily KPI Performance" },
+        style: {
+          fill: "#1890ff",
+        },
+      },
+      {
+        type: "line", // Ligne pour Target
+        encode: {
+          x: "date",
+          y: "target",
+        },
+        style: {
+          stroke: "#ff4d4f",
+          lineWidth: 2,
+        },
+        axis: {
+          y: {
+            title: "Valeurs",
           },
         },
-      });
-    }
-  }, [dailyData]);
+      },
+    ],
+    height: 400,
+    legend: {
+      position: "top",
+      items: [
+        { name: "Actual", marker: { symbol: "square", style: { fill: "#1890ff" } } },
+        { name: "Target", marker: { symbol: "line", style: { stroke: "#ff4d4f", lineWidth: 2 } } },
+      ],
+    },
+  };
 
-  useEffect(() => {
-    if (monthlyChartRef.current && monthlyData.length > 0) {
-      if (monthlyChartInstance.current) {
-        monthlyChartInstance.current.destroy();
-      }
-
-      monthlyChartInstance.current = new Chart(monthlyChartRef.current, {
-        type: "bar",
-        data: {
-          labels: monthlyData.map((d) => d.month),
-          datasets: [
-            {
-              label: "Target (moyenne)",
-              data: monthlyData.map((d) => d.avgTarget),
-              backgroundColor: "rgba(54, 162, 235, 0.5)",
-            },
-            {
-              label: "Actual (moyenne)",
-              data: monthlyData.map((d) => d.avgActual),
-              backgroundColor: "rgba(255, 0, 0, 0.5)",
-            },
-          ],
+  const monthlyCombinedConfig = {
+    data: monthlyData,
+    children: [
+      {
+        type: "interval", // Colonnes pour Actual
+        encode: {
+          x: "month",
+          y: "actual",
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-            title: { display: true, text: "Monthly KPI Performance" },
+        style: {
+          fill: "#1890ff",
+        },
+      },
+      {
+        type: "line", // Ligne pour Target
+        encode: {
+          x: "month",
+          y: "target",
+        },
+        style: {
+          stroke: "#ff4d4f",
+          lineWidth: 2,
+        },
+        axis: {
+          y: {
+            title: "Valeurs",
           },
         },
-      });
-    }
-  }, [monthlyData]);
+      },
+    ],
+    height: 400,
+    legend: {
+      position: "top",
+      items: [
+        { name: "Actual", marker: { symbol: "square", style: { fill: "#1890ff" } } },
+        { name: "Target", marker: { symbol: "line", style: { stroke: "#ff4d4f", lineWidth: 2 } } },
+      ],
+    },
+  };
 
-  const dailyDates = dailyData.map((d) => d.date);
-  const targetRow = dailyData.map((d) => d.target);
-  const actualRow = dailyData.map((d) => d.actual);
-
-return (
-  <div className="kpi-detail-layout">
-    <Sidebar />
-
-    <div className="kpi-detail-content">
-      <h2 className="kpi-detail-title">{kpi?.nom}</h2>
-
-      <div className="mode-toggle">
-        <button className={mode === "daily" ? "active" : ""} onClick={() => setMode("daily")}>Daily</button>
-        <button className={mode === "monthly" ? "active" : ""} onClick={() => setMode("monthly")}>Monthly</button>
+  return (
+    <div className="kpi-detail-layout">
+      <Sidebar />
+      <div className="kpi-detail-content">
+        <h2 className="kpi-detail-title">{kpi?.nom}</h2>
+        <div className="mode-toggle">
+          <button
+            className={mode === "daily" ? "active" : ""}
+            onClick={() => setMode("daily")}
+          >
+            Daily
+          </button>
+          <button
+            className={mode === "monthly" ? "active" : ""}
+            onClick={() => setMode("monthly")}
+          >
+            Monthly
+          </button>
+        </div>
+        <div className="chart-box">
+          {/* Option 1: Seulement les colonnes pour Actual */}
+          {/* <Column {...(mode === "daily" ? dailyChartConfig : monthlyChartConfig)} /> */}
+          
+          {/* Option 2: Colonnes pour Actual + Ligne pour Target */}
+          <Line {...(mode === "daily" ? dailyCombinedConfig : monthlyCombinedConfig)} />
+        </div>
+        <div className="table-box kpi-table-wrapper">
+          {mode === "daily" ? (
+            <table className="kpi-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  {dailyData.map((d, i) => (
+                    <th key={i}>{d.date}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Target</td>
+                  {dailyData.map((d, i) => (
+                    <td key={i}>{d.target}</td>
+                  ))}
+                </tr>
+                <tr>
+                  <td>Actual</td>
+                  {dailyData.map((d, i) => (
+                    <td key={i}>{d.actual}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          ) : (
+            <table className="kpi-table">
+              <thead>
+                <tr>
+                  <th>Mois</th>
+                  <th>Target (moyenne)</th>
+                  <th>Actual (moyenne)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyData.length === 0 ? (
+                  <tr>
+                    <td colSpan="3">Aucune donnée.</td>
+                  </tr>
+                ) : (
+                  monthlyData.map((row, index) => (
+                    <tr key={index}>
+                      <td>{row.month}</td>
+                      <td>{row.target.toFixed(1)}%</td>
+                      <td>{row.actual.toFixed(1)}%</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-
-      {mode === "daily" ? (
-        <>
-          {/* 📊 Graphique Daily */}
-          <div className="chart-box">
-            <canvas ref={chartRef} width="400" height="200"></canvas>
-            {dailyData.length === 0 && <p>Aucune donnée journalière.</p>}
-          </div>
-
-          {/* 📋 Tableau Daily */}
-         <div className="table-box kpi-table-wrapper">
-  <table className="kpi-table">
-    <thead>
-      <tr>
-        <th></th>
-        {dailyDates.map((date, index) => (
-          <th key={index}>{date}</th>
-        ))}
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Target</td>
-        {targetRow.map((value, index) => (
-          <td key={index}>{value}</td>
-        ))}
-      </tr>
-      <tr>
-        <td>Actual</td>
-        {actualRow.map((value, index) => (
-          <td key={index}>{value}</td>
-        ))}
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-        </>
-      ) : (
-        <>
-          {/* 📊 Graphiques côte à côte */}
-          <div className="kpi-duo-layout">
-            <div className="chart-box">
-              <canvas ref={chartRef} width="400" height="200"></canvas>
-              {dailyData.length === 0 && <p>Aucune donnée journalière.</p>}
-            </div>
-            <div className="chart-box">
-              <canvas ref={monthlyChartRef} width="400" height="200"></canvas>
-              {monthlyData.length === 0 && <p>Aucune donnée mensuelle.</p>}
-            </div>
-          </div>
-
-          {/* 📋 Tableaux côte à côte */}
-          <div className="kpi-duo-layout">
-            <div className="table-box kpi-table-wrapper">
-              <table className="kpi-table">
-                <thead>
-                  <tr>
-                    <th></th>
-                    {dailyDates.map((date, index) => (
-                      <th key={index}>{date}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Target</td>
-                    {targetRow.map((value, index) => (
-                      <td key={index}>{value}</td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td>Actual</td>
-                    {actualRow.map((value, index) => (
-                      <td key={index}>{value}</td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div className="table-box">
-              <table className="kpi-table">
-                <thead>
-                  <tr>
-                    <th>Mois</th>
-                    <th>Target (moyenne)</th>
-                    <th>Actual (moyenne)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {monthlyData.length === 0 ? (
-                    <tr><td colSpan="3">Aucune donnée.</td></tr>
-                  ) : (
-                    monthlyData.map((row, index) => (
-                      <tr key={index}>
-                        <td>{row.month}</td>
-                        <td>{row.avgTarget.toFixed(1)}%</td>
-                        <td>{row.avgActual.toFixed(1)}%</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
     </div>
-  </div>
-);
-
+  );
 };
 
 export default KpiDetailPage;

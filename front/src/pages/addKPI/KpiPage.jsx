@@ -53,7 +53,6 @@ const handleSave = async () => {
     form.resetFields();
 
     // Naviguer vers la section
-    navigate(`/sections/${section}`);
   } catch (err) {
     console.error("Erreur lors de l'ajout du KPI :", err);
     message.error("Échec de l'ajout du KPI.");

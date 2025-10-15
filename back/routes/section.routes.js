@@ -1,14 +1,7 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Section = require('../models/section');
+const sectionController = require("../controllers/section.controller");
 
-router.get('/', async (req, res) => {
-  try {
-    const sections = await Section.findAll();
-    res.json(sections);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+router.get("/", sectionController.getAllSections);
 
 module.exports = router;
